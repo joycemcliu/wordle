@@ -1,0 +1,16 @@
+__pycache__/
+.DS_*
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.env
+.env.*
+!.env.example
+
+

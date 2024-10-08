@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "Wordle App"
+version = "0.1.0"
+description = ""
+authors = []
+license = ""
+readme = "README.md"
+
+# [project]
+# requires-python = "3.12"
+
+[tool.ruff] # https://docs.astral.sh/ruff/settings/#top-level
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint] # https://docs.astral.sh/ruff/settings/#lint
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "UP", # pyupgrade
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+[tool.ruff.format] # https://docs.astral.sh/ruff/settings/#format
+quote-style = "double"
+line-ending = "auto"
+skip-magic-trailing-comma = false

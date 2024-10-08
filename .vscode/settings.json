@@ -1,0 +1,21 @@
+{
+  "ruff.lint.enable": true,
+  "ruff.fixAll": true,
+  "python.analysis.autoImportCompletions": true,
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "files.associations": {
+    ".pt": "html"
+  }
+  // "xml.format.maxLineWidth": 0,
+  // "xml.preferences.quoteStyle": "double"
+}

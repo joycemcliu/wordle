@@ -115,7 +115,7 @@ def upgrade() -> None:
         ),
         sa.Column("answer", sa.String, nullable=False),
         sa.Column("max_rounds", sa.Integer, nullable=False),
-        sa.Column("num_attemps", sa.Integer, nullable=False),
+        sa.Column("num_attempts", sa.Integer, nullable=False),
         sa.Column("is_end", sa.Boolean, nullable=False, index=True),
     )
     op.create_table(

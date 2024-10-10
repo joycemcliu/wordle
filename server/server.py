@@ -1,12 +1,20 @@
+import logging
 import os
+import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
-from middleware.custom_logging import logger_config
+from middleware.custom_logging import logger_config, setup_logging
 from models.migration import run_migrations
 from models.session import init_db_session, sessionmanager
 from views import game
+
+setup_logging()
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler(stream=sys.stdout)
+logger.addHandler(handler)
 
 
 @asynccontextmanager

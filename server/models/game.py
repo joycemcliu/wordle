@@ -46,7 +46,7 @@ class Game(BaseModel):
     user = orm.relationship("User")
     answer = sa.Column(sa.String, nullable=False)
     max_rounds = sa.Column(sa.Integer, nullable=False)
-    num_attemps = sa.Column(sa.Integer, nullable=False, default=0)
+    num_attempts = sa.Column(sa.Integer, nullable=False, default=0)
     is_end = sa.Column(sa.Boolean, nullable=False, index=True, default=False)
 
     def __str__(self):
@@ -58,7 +58,7 @@ class Game(BaseModel):
             f"user_id={self.user_id}\n"
             f"answer={self.answer}\n"
             f"max_rounds={self.max_rounds}\n"
-            f"num_attemps={self.num_attemps}\n"
+            f"num_attempts={self.num_attempts}\n"
             f"score={self.score}\n"
             f">"
         )

@@ -47,12 +47,21 @@ class User(BaseModel):
         )
 
     @classmethod
-    async def create(cls, db: AsyncSession, id=None, name=None, **kwargs):
+    async def get(cls, db: AsyncSession, id: str):
+        try:
+            transaction = await db.get(cls, id)
+        except NoResultFound:
+            return None
+        return transaction
+    @classmethod
+
+    @classmethod
+    async def create(cls, db: AsyncSession, id=None, name=None, **kwargs) -> User:
         if not id:
             id = uuid_v7()
 
         if not name:
-            name = "user" + str(id[:7])
+            name = "user_" + str(id[-7:])
 
         transaction = cls(id=id, name=name, **kwargs)
         db.add(transaction)

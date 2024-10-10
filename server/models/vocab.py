@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import datetime
+import random
 import uuid
 
 import sqlalchemy as sa
 from models.base import BaseModel, uuid_v7
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class Vocabulary(BaseModel):
@@ -45,3 +48,32 @@ class Vocabulary(BaseModel):
             f"word={self.word}\n"
             f">"
         )
+
+    @classmethod
+    async def get(cls, db: AsyncSession, word: str):
+        return (await db.execute(select(cls).where(cls.word == word))).scalar_one_or_none()
+
+    @classmethod
+    async def get_random_word(cls, db: AsyncSession, length: int) -> Vocabulary | None:
+        total_count = (
+            await db.execute(
+                select(func.count()).select_from(Vocabulary).where(Vocabulary.length == length)
+            )
+        ).scalar()
+
+        if not total_count:
+            return None
+
+        return (
+            await db.execute(
+                select(cls)
+                .where(cls.length == length)
+                .offset(random.randint(0, total_count - 1))
+                .limit(1)
+            )
+        ).scalar_one()
+
+    @classmethod
+    def get_random_word_from_list(cls, words: list[str]) -> str:
+        return random.choice(words)
+

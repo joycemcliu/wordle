@@ -3,8 +3,10 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from middleware.custom_logging import logger_config
 from models.migration import run_migrations
 from models.session import init_db_session, sessionmanager
+from views import game
 
 
 @asynccontextmanager
@@ -23,12 +25,14 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(game.router, prefix="/v1")
 
 
-@app.get("/")
-async def home():
-    return "hello world"
+@app.get("/health")
+async def health():
+    return
 
 
 if __name__ == "__main__":
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=True)
+    realod = os.environ.get("ENV", "dev") == "dev"
+    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=realod, log_config=logger_config)

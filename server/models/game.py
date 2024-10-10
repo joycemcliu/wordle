@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import uuid
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from models.base import BaseModel, uuid_v7
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.ext.asyncio import AsyncSession
+
+log = logging.getLogger(__name__)
 
 
 class Game(BaseModel):
@@ -34,7 +40,7 @@ class Game(BaseModel):
         nullable=False,
         server_default=sa.func.now(),
     )
-    user_id: str = sa.Column(
+    user_id: uuid.UUID = sa.Column(
         UUID(as_uuid=True), sa.ForeignKey("users.id"), nullable=False, index=True
     )
     user = orm.relationship("User")
@@ -56,3 +62,28 @@ class Game(BaseModel):
             f"score={self.score}\n"
             f">"
         )
+
+    @classmethod
+    async def get(cls, db: AsyncSession, id: str):
+        try:
+            transaction = await db.get(cls, id)
+        except NoResultFound:
+            return None
+        except Exception as e:
+            log.error(e)
+            return None
+        return transaction
+
+    @classmethod
+    async def get_all(cls, db: AsyncSession):
+        return (await db.execute(select(cls))).scalars().all()
+
+    @classmethod
+    async def create(cls, db: AsyncSession, user_id, answer, max_rounds, **kwargs):
+        transaction = cls(
+            id=uuid_v7(), user_id=user_id, answer=answer, max_rounds=max_rounds, **kwargs
+        )
+        db.add(transaction)
+        await db.commit()
+        await db.refresh(transaction)
+        return transaction

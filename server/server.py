@@ -43,4 +43,4 @@ async def health():
 
 if __name__ == "__main__":
     realod = os.environ.get("ENV", "dev") == "dev"
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=realod, log_config=logger_config)
+    uvicorn.run("server:app", host="0.0.0.0", port=8010, reload=realod, log_config=logger_config)

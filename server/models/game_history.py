@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import uuid
 
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 from models.base import BaseModel, uuid_v7
+from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
+
+log = logging.getLogger(__name__)
 
 
 class GameHistory(BaseModel):
@@ -58,3 +63,26 @@ class GameHistory(BaseModel):
             f"miss_count={self.miss_count}\n"
             f">"
         )
+
+    async def insert(self, db: AsyncSession):
+        db.add(self)
+        await db.commit()
+        await db.refresh(self)
+        return self
+
+    @classmethod
+    async def get_by_game_id(cls, db: AsyncSession, game_id: str):
+        try:
+            return (
+                (
+                    await db.execute(
+                        select(cls).where(cls.game_id == game_id).order_by(cls.updated_at)
+                    )
+                )
+                .scalars()
+                .all()
+            )
+
+        except Exception as e:
+            log.error(e)
+            return None

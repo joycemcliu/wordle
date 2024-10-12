@@ -22,7 +22,6 @@ let currentCol = 0;
 let currentCellId = 0;
 let guess = '';
 
-let game;
 let id = getCookie("wordle_game");
 let gameActive = true;
 
@@ -36,18 +35,17 @@ function getGame() {
     }
     fetch(api_base + "/v1/game/" + id, {
         method: "GET"
-    }).then(response => response.json()).then(data => {
-        game = data;
+    }).then(response => response.json()).then(game => {
         id = game.id;
 
         gameActive = game.is_end === false;
 
-        if (data.history === undefined) {
+        if (game.history === undefined) {
             return;
         }
-        for (let i = 0; i < data.history.length; i++) {
-            const word = data.history[i].word;
-            const hint = data.history[i].hint;
+        for (let i = 0; i < game.history.length; i++) {
+            const word = game.history[i].word;
+            const hint = game.history[i].hint;
             for (let j = 0; j < word.length; j++) {
                 const cell = getCellByNum(i * maxCols + j);
                 cell.textContent = word[j].toUpperCase();
@@ -71,13 +69,12 @@ function getGame() {
 }
 
 
-function getNewGame(game) {
+function getNewGame() {
     eraseCookie("wordle_game");
 
     fetch(api_base + "/v1/game/new", {
         method: "GET"
-    }).then(response => response.json()).then(data => {
-        game = data;
+    }).then(response => response.json()).then(game => {
         if (game.id) {
             setCookie("wordle_game", game.id, 1);
             id = game.id;
@@ -117,7 +114,8 @@ function newGame() {
     currentCol = 0;
     currentCellId = 0;
     guess = '';
-    game = {};
+    gameActive = true;
+
     getNewGame();
     const guessMsg = document.getElementById('guess-msg');
     guessMsg.textContent = ' ';
@@ -223,9 +221,9 @@ function updateGuess(hint, word) {
     }
 
     for (let i = 0; i < maxCols; i++) {
-        h = hint[i];
+        let h = hint[i];
         const cell = getCellByNum(currentRow * maxCols + i);
-        w = word[i].toUpperCase();
+        let w = word[i].toUpperCase();
         const key = document.getElementById("key-" + w);
 
         cell.style.color = "white";
@@ -243,8 +241,6 @@ function updateGuess(hint, word) {
                 key.style.backgroundColor = "grey";
             }
         }
-
-
     }
 }
 
@@ -264,7 +260,6 @@ function submitGuess() {
         }
         return response.json();
     }).then(data => {
-        console.log("data", data);
         if (data.hint == Hint_ENUM.HIT.repeat(maxCols)) {
             updateGuessMsg("You win!", "green");
             gameActive = false;

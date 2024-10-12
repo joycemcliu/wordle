@@ -73,8 +73,13 @@ function getGameHistory() {
         currentCol = 0;
         currentRow = game.num_attempts;
         currentCellId = currentRow * maxCols;
-        if (currentRow >= maxRows) {
-            updateGuessMsg("Answer: " + game.answer, "grey");
+
+        if (game.is_end) {
+            if (game.answer === game.history[game.history.length - 1].word) {
+                updateGuessMsg("You win!", "green");
+            } else {
+                updateGuessMsg("Answer: " + game.answer, "grey");
+            }
             gameActive = false;
         }
     }).catch(error => {

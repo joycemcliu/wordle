@@ -20,7 +20,7 @@ let Hint_ENUM = {
 };
 
 const maxCols = 5;
-const maxRows = 6;
+let maxRows = 0;
 let currentRow = 0;
 let currentCol = 0;
 let currentCellId = 0;
@@ -29,9 +29,22 @@ let guess = '';
 let id = getCookie("wordle_game");
 let gameActive = true;
 
+class NumAttempts {
+    constructor() {
+        this.numAttempts = document.getElementById("num-attempts");
+        this.numAttempts.addEventListener("input", function () {
+            maxRows = numAttempts.value;
+        });
+    }
+    getNumAttempts() {
+        return this.numAttempts.value;
+    }
+    setNumAttemptsValue(value) {
+        this.numAttempts.value = value;
+    }
+}
+const numAttempts = new NumAttempts();
 getGameHistory();
-createGuessContainer(maxRows, maxCols);
-createKeyboard();
 
 class Cell {
     static getCell(row, col, offset = 0) {
@@ -46,18 +59,24 @@ class Cell {
 // Game control logic
 function getGameHistory() {
     if (!id) {
+        getNewGame();
         return;
     }
     fetch(api_base + "/v1/game/" + id, {
         method: "GET"
     }).then(response => response.json()).then(game => {
         id = game.id;
+        maxRows = game.max_rounds;
+        numAttempts.setNumAttemptsValue(maxRows);
 
         gameActive = game.is_end === false;
 
         if (game.history === undefined) {
             return;
         }
+        createGuessContainer(maxRows, maxCols);
+        createKeyboard();
+
         for (let i = 0; i < game.history.length; i++) {
             const word = game.history[i].word;
             const hint = game.history[i].hint;
@@ -90,8 +109,12 @@ function getGameHistory() {
 
 function getNewGame() {
     eraseCookie("wordle_game");
+    if (numAttempts.getNumAttempts() < 1) {
+        numAttempts.setNumAttemptsValue(6);
+    }
+    maxRows = numAttempts.getNumAttempts();
 
-    fetch(api_base + "/v1/game/new", {
+    fetch(api_base + "/v1/game/new?num_attempts=" + maxRows, {
         method: "GET"
     }).then(response => response.json()).then(game => {
         if (game.id) {
@@ -99,6 +122,8 @@ function getNewGame() {
             id = game.id;
         }
     });
+    createGuessContainer(maxRows, maxCols);
+    createKeyboard();
 }
 
 function newGame() {
@@ -111,8 +136,7 @@ function newGame() {
     getNewGame();
     const guessMsg = document.getElementById('guess-msg');
     guessMsg.textContent = ' ';
-    document.getElementById("guess-container").innerHTML = '';
-    document.getElementById("keyboard").innerHTML = '';
+
     createGuessContainer(maxRows, maxCols);
     createKeyboard();
 }
@@ -120,6 +144,7 @@ function newGame() {
 
 // Draw the guess container
 function createGuessContainer(rows, cols) {
+    document.getElementById("guess-container").innerHTML = '';
     const table = document.getElementById("guess-container");
 
     for (let i = 0; i < rows; i++) {
@@ -135,6 +160,7 @@ function createGuessContainer(rows, cols) {
 
 // Draw the keyboard
 function createKeyboard() {
+    document.getElementById("keyboard").innerHTML = '';
     const keyboardRows = [
         ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
         ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
@@ -285,6 +311,9 @@ document.addEventListener("keydown", function (event) {
     if (!gameActive) {
         return;
     }
+    if (document.activeElement.tagName === "INPUT") {
+        return;
+    }
     clearGuessMsg();
 
     const key = event.key.toUpperCase();
@@ -301,4 +330,3 @@ document.addEventListener("keydown", function (event) {
         console.log("Invalid key pressed");
     }
 });
-

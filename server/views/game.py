@@ -72,16 +72,23 @@ def check_guess(guess: str, answer: str) -> str:
 
 
 @router.get("/new", response_model=NewGameResp)
-async def new_game(user_id: str | None = None, db: AsyncSession = Depends(get_db_session)):
+async def new_game(
+    user_id: str | None = None,
+    num_attempts: int | None = None,
+    db: AsyncSession = Depends(get_db_session),
+):
     if not user_id:
         user = await UserModel.create(db)
     else:
         user = await UserModel.get(db, user_id)
 
+    if not num_attempts:
+        num_attempts = DEFAULT_MAX_ATTEMPTS
+
     # vocab = await VocabModel.get_random_word(db, DEFAULT_LEN_WORD)
     # word = vocab.word
     word = VocabModel.get_random_word_from_list(words_list)  # for testing
-    game = await GameModel.create(db, user_id=user.id, answer=word, max_rounds=DEFAULT_MAX_ATTEMPTS)
+    game = await GameModel.create(db, user_id=user.id, answer=word, max_rounds=num_attempts)
     log.info(f"New game created: {game}")
     return game
 

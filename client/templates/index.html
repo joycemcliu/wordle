@@ -16,8 +16,20 @@
 <body>
     <div class="title-bar">
         <h1>Wordle Game</h1>
-        <button class="new-game-button" onclick="newGame()">New Game</button>
+        <div class="controls-group">
+            <div class="word-length-group">
+                <p>Word Length: 5</p>
+                <!-- <label for="word-length">Word Length:</label>
+                <input type="number" id="word-length" class="word-length" value="5"> -->
+            </div>
+            <div class="num-attempts-group">
+                <label for="num-attempts">Max Attempts:</label>
+                <input type="number" id="num-attempts" class="num-attempts" value="6" min="1" max="20">
+            </div>
+            <button class="new-game-button" onclick="newGame()">New Game</button>
+        </div>
     </div>
+
 
 
     <table id="guess-container" class="guess-container"></table>

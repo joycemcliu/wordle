@@ -12,6 +12,35 @@ body {
     padding: 10px 20px;
 }
 
+.title-bar h1 {
+    margin: 0;
+    flex-grow: 1;
+    text-align: left;
+}
+
+.controls-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.word-length-group,
+.num-attempts-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.word-length,
+.num-attempts {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    width: 40px;
+    text-align: center;
+}
+
 .new-game-button {
     background-color: #f44336;
     border: none;
@@ -20,6 +49,10 @@ body {
     cursor: pointer;
     font-size: 16px;
     border-radius: 5px;
+}
+
+.new-game-button:hover {
+    background-color: #d32f2f;
 }
 
 .guess-container {

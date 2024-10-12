@@ -29,6 +29,16 @@ getGame();
 createGuessContainer(maxRows, maxCols);
 createKeyboard();
 
+class Cell {
+    static getCell(row, col, offset = 0) {
+        let num = row * maxCols + col + offset;
+        return document.getElementById("guess-container").rows[Math.floor(num / maxCols)].cells[num % maxCols];
+    }
+    static getCellNum(row, col) {
+        return row * maxCols + col;
+    }
+}
+
 function getGame() {
     if (!id) {
         return;
@@ -47,7 +57,7 @@ function getGame() {
             const word = game.history[i].word;
             const hint = game.history[i].hint;
             for (let j = 0; j < word.length; j++) {
-                const cell = getCellByNum(i * maxCols + j);
+                const cell = Cell.getCell(i, 0, j);
                 cell.textContent = word[j].toUpperCase();
             }
             currentCol = 0;
@@ -185,16 +195,12 @@ function createKeyboard() {
 
 
 
-function getCellByNum(num) {
-    return document.getElementById("guess-container").rows[Math.floor(num / maxCols)].cells[num % maxCols];
-}
-
 function insertLetter(letter) {
     if (currentCol >= maxCols) {
         return
     }
-    if (currentCellId < maxCols * maxRows) {
-        const currentCell = getCellByNum(currentCellId);
+    if (Cell.getCellNum(currentRow, currentCol) < maxCols * maxRows) {
+        const currentCell = Cell.getCell(currentRow, currentCol);
         currentCell.textContent = letter;
         currentCellId++;
         currentCol++;
@@ -209,7 +215,7 @@ function deleteLetter() {
     if (currentCellId > 0) {
         currentCellId--;
         currentCol--;
-        const currentCell = getCellByNum(currentCellId);
+        const currentCell = Cell.getCell(currentRow, currentCol);
         currentCell.textContent = " ";
         guess = guess.slice(0, -1);
     }
@@ -222,7 +228,7 @@ function updateGuess(hint, word) {
 
     for (let i = 0; i < maxCols; i++) {
         let h = hint[i];
-        const cell = getCellByNum(currentRow * maxCols + i);
+        const cell = Cell.getCell(currentRow, 0, i);
         let w = word[i].toUpperCase();
         const key = document.getElementById("key-" + w);
 

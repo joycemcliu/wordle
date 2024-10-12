@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/styles.css') }}">
+    <script src="{{ url_for('static', path='js/script.js') }}" defer></script>
+    <script>
+        window.config = {
+            serverPort: "{{ server_port }}",
+            clientPort: "{{ client_port }}"
+        }
+    </script>
+    <title>Wordle Game</title>
+</head>
+<body>
+    <div class="title-bar">
+        <h1>Wordle Game</h1>
+        <button class="new-game-button" onclick="newGame()">New Game</button>
+    </div>
+
+
+    <table id="guess-container" class="guess-container"></table>
+
+    <div id="guess-msg" class="guess-msg"> </div>
+
+    <div id="keyboard" class="keyboard"></div>
+
+</body>
+</html>

@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from middleware.custom_logging import logger_config, setup_logging
 from models.migration import run_migrations
 from models.session import init_db_session, sessionmanager
@@ -33,6 +34,20 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+client_port = os.environ.get("CLIENT_PORT")
+origins = [
+    f"http://localhost:{client_port}",
+    f"http://127.0.0.1:{client_port}",
+    f"http://0.0.0.0:{client_port}",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(game.router, prefix="/v1")
 
 

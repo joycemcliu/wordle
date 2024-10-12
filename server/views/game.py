@@ -2,7 +2,7 @@ import enum
 import logging
 from uuid import UUID
 
-from config import DEFAULT_MAX_ATTEMPTS
+from config import DEFAULT_LEN_WORD, DEFAULT_MAX_ATTEMPTS  # noqa
 from fastapi import APIRouter, Depends, HTTPException
 from models.game import Game as GameModel
 from models.game_history import GameHistory
@@ -41,6 +41,18 @@ class GuessResp(NewGameResp):
 
     class Config:
         orm_mode = True
+
+
+class GameHistoryItem(BaseModel):
+    word: str
+    hint: str
+
+    class Config:
+        orm_mode = True
+
+
+class GetGameHistoryResp(NewGameResp):
+    history: list[GameHistoryItem] = []
 
 
 words_list = ["hello", "world", "quite", "fancy", "fresh", "panic", "crazy", "buggy"]
@@ -123,4 +135,28 @@ async def submit_guess(
         is_end=game.is_end,
         hint=hint,
         answer=answer,
+    )
+
+
+@router.get("/{id}", response_model=GetGameHistoryResp)
+async def get_game(
+    id: str,
+    db: AsyncSession = Depends(get_db_session),
+):
+    game = await GameModel.get(db, id)
+    if game is None:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    history = await GameHistory.get_by_game_id(db, game.id)
+    if history is None:
+        history = GameHistory(game_id=game.id, word=game.answer, answer="")
+
+    history_list = []
+    for h in history:
+        history_list.append(
+            GameHistoryItem(word=h.word, hint=check_guess(guess=h.word, answer=h.answer))
+        )
+    return GetGameHistoryResp(
+        **game.__dict__,
+        history=history_list,
     )

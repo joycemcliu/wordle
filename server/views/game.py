@@ -52,6 +52,7 @@ class GameHistoryItem(BaseModel):
 
 
 class GetGameHistoryResp(NewGameResp):
+    answer: str = ""
     history: list[GameHistoryItem] = []
 
 
@@ -156,7 +157,11 @@ async def get_game(
         history_list.append(
             GameHistoryItem(word=h.word, hint=check_guess(guess=h.word, answer=h.answer))
         )
+    game_dict = game.__dict__
+    if game.is_end:
+        game_dict["answer"] = game.answer
+
     return GetGameHistoryResp(
-        **game.__dict__,
+        **game_dict,
         history=history_list,
     )

@@ -1,0 +1,7 @@
+**/README.md
+**/.gitignore
+**/Dockerfile*
+**/docker-compose*
+.vscode
+data
+__pycache__

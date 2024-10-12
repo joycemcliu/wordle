@@ -45,6 +45,7 @@ class GameHistory(BaseModel):
     game = orm.relationship("Game")
     word = sa.Column(sa.String, nullable=False)
     answer = sa.Column(sa.String, nullable=False)
+    hint = sa.Column(sa.String, nullable=False)
     hit_count = sa.Column(sa.Integer, nullable=False)
     present_count = sa.Column(sa.Integer, nullable=False)
     miss_count = sa.Column(sa.Integer, nullable=False)
@@ -58,6 +59,7 @@ class GameHistory(BaseModel):
             f"game_id={self.game_id}\n"
             f"word={self.word}\n"
             f"answer={self.answer}\n"
+            f"hint={self.hint}\n"
             f"hit_count={self.hit_count}\n"
             f"present_count={self.present_count}\n"
             f"miss_count={self.miss_count}\n"
@@ -73,14 +75,23 @@ class GameHistory(BaseModel):
     @classmethod
     async def get_by_game_id(cls, db: AsyncSession, game_id: str):
         try:
+            return (await db.execute(select(cls).where(cls.game_id == game_id))).scalars().all()
+
+        except Exception as e:
+            log.error(e)
+            return None
+
+    @classmethod
+    async def get_last_by_game_id(cls, db: AsyncSession, game_id: str) -> GameHistory | None:
+        try:
             return (
                 (
                     await db.execute(
-                        select(cls).where(cls.game_id == game_id).order_by(cls.updated_at)
+                        select(cls).where(cls.game_id == game_id).order_by(cls.updated_at.desc())
                     )
                 )
                 .scalars()
-                .all()
+                .first()
             )
 
         except Exception as e:

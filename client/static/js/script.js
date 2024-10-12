@@ -94,7 +94,8 @@ function getGameHistory() {
         currentCellId = currentRow * maxCols;
 
         if (game.is_end) {
-            if (game.answer === game.history[game.history.length - 1].word) {
+            let last_hint = game.history[game.history.length - 1].hint;
+            if (last_hint === Hint_ENUM.HIT.repeat(maxCols)) {
                 updateGuessMsg("You win!", "green");
             } else {
                 updateGuessMsg("Answer: " + game.answer, "grey");
@@ -325,6 +326,10 @@ document.addEventListener("keydown", function (event) {
         insertLetter(key);
     } else if (key === "ENTER") {
         event.preventDefault();
+        if (guess.length !== maxCols) {
+            updateGuessMsg("Not enough letters", "black");
+            return;
+        }
         submitGuess();
     } else {
         console.log("Invalid key pressed");

@@ -1,5 +1,5 @@
-import enum
 import logging
+import random
 from uuid import UUID
 
 from config import DEFAULT_LEN_WORD, DEFAULT_MAX_ATTEMPTS  # noqa
@@ -11,16 +11,17 @@ from models.user import User as UserModel
 from models.vocab import Vocabulary as VocabModel
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
+from src.game_guess import (  # noqa
+    Hint,
+    compare_two_words,
+    filter_candidates,
+    get_highest_word,
+    get_lowest_words,
+)
 
 log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/game")
-
-
-class Hint(enum.Enum):
-    HIT = "0"
-    PRESENT = "?"
-    MISS = "_"
 
 
 class NewGameResp(BaseModel):
@@ -56,19 +57,7 @@ class GetGameHistoryResp(NewGameResp):
     history: list[GameHistoryItem] = []
 
 
-words_list = ["hello", "world", "quite", "fancy", "fresh", "panic", "crazy", "buggy"]
-
-
-def check_guess(guess: str, answer: str) -> str:
-    hint = ""
-    for i in range(len(answer)):
-        if answer[i] == guess[i]:
-            hint += Hint.HIT.value
-        elif guess[i] in answer:
-            hint += Hint.PRESENT.value
-        else:
-            hint += Hint.MISS.value
-    return hint
+words_list = ["hello", "world", "quite", "fancy", "fresh", "panic", "crazy", "buggy", "scare"]
 
 
 @router.get("/new", response_model=NewGameResp)
@@ -82,13 +71,18 @@ async def new_game(
     else:
         user = await UserModel.get(db, user_id)
 
-    if not num_attempts:
+    if not num_attempts or num_attempts < 1:
         num_attempts = DEFAULT_MAX_ATTEMPTS
 
     # vocab = await VocabModel.get_random_word(db, DEFAULT_LEN_WORD)
     # word = vocab.word
-    word = VocabModel.get_random_word_from_list(words_list)  # for testing
-    game = await GameModel.create(db, user_id=user.id, answer=word, max_rounds=num_attempts)
+    # word = VocabModel.get_random_word_from_list(words_list)  # for testing
+    # words = await VocabModel.get_random_words(db, DEFAULT_LEN_WORD, max(num_attempts - 2, 3))
+    # candidates = ",".join([w.word for w in words])
+    candidates = ",".join(words_list)
+    print(f"{candidates=}")
+
+    game = await GameModel.create(db, user_id=user.id, answer=candidates, max_rounds=num_attempts)
     log.info(f"New game created: {game}")
     return game
 
@@ -99,6 +93,7 @@ async def submit_guess(
     guess: str,
     db: AsyncSession = Depends(get_db_session),
 ):
+    # Validate guess and game status
     guess = guess.lower()
     game = await GameModel.get(db, id)
     if game is None:
@@ -107,31 +102,57 @@ async def submit_guess(
     if game.num_attempts >= game.max_rounds or game.is_end:
         raise HTTPException(status_code=400, detail="Game is over")
 
-    if len(guess) != len(game.answer):
-        raise HTTPException(status_code=400, detail="Invalid guess length")
-
     vocab = await VocabModel.get(db, guess)
     if vocab is None:
         raise HTTPException(status_code=400, detail="Not a valid word")
 
-    history = GameHistory(game_id=game.id, word=guess, answer=game.answer)
+    last_history = await GameHistory.get_last_by_game_id(db, game.id)
+    candidates = []
+    if last_history is None:
+        candidates: list[str] = game.answer.split(",")
+    else:
+        candidates: list[str] = last_history.answer.split(",")
+    log.debug(f"current: {candidates=}")
 
-    hint = check_guess(guess=guess, answer=game.answer)
+    if len(guess) != len(candidates[0]):
+        raise HTTPException(status_code=400, detail="Invalid guess length")
 
+    # Compare guess with answer
+    hint = ""
+    if len(candidates) == 1:
+        # Normal wordle game comparison
+        hint, _ = compare_two_words(word=guess, ref=candidates[0])
+    else:
+        highest, hint = get_highest_word(guess, candidates)
+        update = filter_candidates(highest, hint, candidates)
+        if len(update) > 0:
+            candidates = update
+        lowest, hints = get_lowest_words(guess, candidates)
+        hint = hints[0]
+        if len(lowest) > 1:
+            answer = random.choice(lowest)
+            hint = hints[lowest.index(answer)]
+            candidates = [answer]
+
+    # Update game status
+    history = GameHistory(game_id=game.id, word=guess, answer=",".join(candidates))
+    history.hint = hint
     history.hit_count = hint.count(Hint.HIT.value)
     history.present_count = hint.count(Hint.PRESENT.value)
     history.miss_count = hint.count(Hint.MISS.value)
 
-    answer = ""
-    if hint == Hint.HIT.value * len(game.answer):
+    answer_to_player = ""
+    if hint == Hint.HIT.value * len(candidates[0]):
         game.is_end = True
-        answer = game.answer
+        answer_to_player = candidates[0]
+
     if not game.is_end:
         game.num_attempts += 1
         if game.num_attempts >= game.max_rounds:
             game.is_end = True
-            answer = game.answer
+            answer_to_player = random.choice(candidates)
 
+    history.answer = ",".join(candidates)
     await db.commit()
     await history.insert(db)
 
@@ -142,7 +163,7 @@ async def submit_guess(
         num_attempts=game.num_attempts,
         is_end=game.is_end,
         hint=hint,
-        answer=answer,
+        answer=answer_to_player,
     )
 
 
@@ -161,12 +182,16 @@ async def get_game(
 
     history_list = []
     for h in history:
-        history_list.append(
-            GameHistoryItem(word=h.word, hint=check_guess(guess=h.word, answer=h.answer))
-        )
+        history_list.append(GameHistoryItem(word=h.word, hint=h.hint))
+
+    # Not display answer if game is not ended
     game_dict = game.__dict__
+    game_dict.pop("answer")
     if game.is_end:
-        game_dict["answer"] = game.answer
+        answer = history[-1].answer
+        if "," in answer:
+            answer = random.choice(answer.split(","))
+        game_dict["answer"] = history[-1].answer
 
     return GetGameHistoryResp(
         **game_dict,

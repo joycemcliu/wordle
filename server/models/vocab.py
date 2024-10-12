@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import random
 import uuid
 
@@ -9,6 +10,8 @@ from models.base import BaseModel, uuid_v7
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+
+log = logging.getLogger(__name__)
 
 
 class Vocabulary(BaseModel):
@@ -50,7 +53,7 @@ class Vocabulary(BaseModel):
         )
 
     @classmethod
-    async def get(cls, db: AsyncSession, word: str):
+    async def get(cls, db: AsyncSession, word: str) -> Vocabulary | None:
         return (await db.execute(select(cls).where(cls.word == word))).scalar_one_or_none()
 
     @classmethod
@@ -77,3 +80,14 @@ class Vocabulary(BaseModel):
     def get_random_word_from_list(cls, words: list[str]) -> str:
         return random.choice(words)
 
+    @classmethod
+    async def get_random_words(cls, db: AsyncSession, length: int, count: int) -> list[Vocabulary]:
+        return (
+            (
+                await db.execute(
+                    select(cls).where(cls.length == length).order_by(func.random()).limit(count)
+                )
+            )
+            .scalars()
+            .all()
+        )

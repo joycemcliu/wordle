@@ -1,3 +1,4 @@
+import { getCookie, setCookie, eraseCookie } from './cookie.js';
 
 let serverPort = window.config.serverPort;
 let clientPort = window.config.clientPort;
@@ -6,6 +7,9 @@ document.addEventListener("DOMContentLoaded", function () {
     serverPort = window.config.serverPort;
     clientPort = window.config.clientPort;
 });
+
+// let "newGame" be a function that is exported from the script.js file
+window.newGame = newGame;
 
 const api_base = `http://localhost:${serverPort}`;
 
@@ -25,7 +29,7 @@ let guess = '';
 let id = getCookie("wordle_game");
 let gameActive = true;
 
-getGame();
+getGameHistory();
 createGuessContainer(maxRows, maxCols);
 createKeyboard();
 
@@ -39,7 +43,8 @@ class Cell {
     }
 }
 
-function getGame() {
+// Game control logic
+function getGameHistory() {
     if (!id) {
         return;
     }
@@ -78,7 +83,6 @@ function getGame() {
     });
 }
 
-
 function getNewGame() {
     eraseCookie("wordle_game");
 
@@ -91,33 +95,6 @@ function getNewGame() {
         }
     });
 }
-
-
-function setCookie(name, value, days) {
-    let expires = "";
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));  // Convert days to milliseconds
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "") + expires + "; path=/";
-}
-
-function getCookie(name) {
-    var nameEQ = name + "=";
-    var ca = document.cookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-    }
-    return null;
-}
-
-function eraseCookie(name) {
-    document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-}
-
 
 function newGame() {
     currentRow = 0;
@@ -136,6 +113,7 @@ function newGame() {
 }
 
 
+// Draw the guess container
 function createGuessContainer(rows, cols) {
     const table = document.getElementById("guess-container");
 
@@ -150,6 +128,7 @@ function createGuessContainer(rows, cols) {
     }
 }
 
+// Draw the keyboard
 function createKeyboard() {
     const keyboardRows = [
         ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -193,8 +172,7 @@ function createKeyboard() {
     });
 }
 
-
-
+// Game's keyboard control logic
 function insertLetter(letter) {
     if (currentCol >= maxCols) {
         return
@@ -283,10 +261,19 @@ function submitGuess() {
         updateGuessMsg(error.message, "red");
     });
 }
+
+// Modify the guess message
+function updateGuessMsg(msg, color) {
+    const guessMsg = document.getElementById("guess-msg");
+    guessMsg.textContent = msg;
+    guessMsg.style.color = color;
+}
 function clearGuessMsg() {
     const guessMsg = document.getElementById('guess-msg');
     guessMsg.textContent = ' ';
 }
+
+
 
 // Capture keyboard input
 document.addEventListener("keydown", function (event) {
@@ -309,10 +296,4 @@ document.addEventListener("keydown", function (event) {
         console.log("Invalid key pressed");
     }
 });
-
-function updateGuessMsg(msg, color) {
-    const guessMsg = document.getElementById("guess-msg");
-    guessMsg.textContent = msg;
-    guessMsg.style.color = color;
-}
 

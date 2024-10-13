@@ -216,6 +216,7 @@ function createKeyboard() {
             keyElement.classList.add('key');
             keyElement.id = 'key-' + key;
             keyElement.textContent = key;
+            keyElement.style.backgroundColor = "white";
             if (key === 'ENTER') {
                 keyElement.classList.add('enter');
             } else if (key === '⌫') {
@@ -292,7 +293,7 @@ function updateGuess(hint, word) {
             }
         } else {
             cell.style.backgroundColor = "grey";
-            if (key.style.backgroundColor !== "white") {
+            if (key.style.backgroundColor === "white") {
                 key.style.backgroundColor = "grey";
             }
         }

@@ -194,19 +194,26 @@ async def submit_guess(
                 if len(update) > 0:
                     candidates = update
                 else:
-                    candidates = [random.choice(candidates)]
+                    update = list(candidates)
+                    [update.remove(h) for h in highest]
+                    lowest, _ = get_lowest_words(guess, update)
+                    log.debug(f"lowest: {lowest=}")
+                    candidates = [random.choice(lowest)]
                 log.debug(f"remaining: {candidates=}")
 
             log.debug(f"final candidates: {candidates=}")
-            # update hint
-            hint = list(Hint.MISS.value * len(guess))
-            for i in range(len(guess)):
-                w = guess[i]
-                # if all candidates have the same letter, then it's a PRESENT
-                log.debug(f"check {w=} {all(w in c for c in candidates)=}")
-                if all(w in c for c in candidates):
-                    hint[i] = Hint.PRESENT.value
-            hint = "".join(hint)
+            if len(candidates) == 1:
+                hint, _ = compare_two_words(word=guess, ref=candidates[0])
+            else:
+                # update hint
+                hint = list(Hint.MISS.value * len(guess))
+                for i in range(len(guess)):
+                    w = guess[i]
+                    # if all candidates have the same letter, then it's a PRESENT
+                    log.debug(f"check {w=} {all(w in c for c in candidates)=}")
+                    if all(w in c for c in candidates):
+                        hint[i] = Hint.PRESENT.value
+                hint = "".join(hint)
             log.debug(f"update hint: {hint=}")
 
     # Update game status

@@ -2,6 +2,7 @@
 The Wordle game is a puzzle where a player have six attempts to guess a 5-letter word, receiving feedback on correct letters and their positions after each guess.
 
 Flow:
+
 loop until either player guess correctly or on a allowed rounds:
 1. player submits a 5-letter word as a guess
 2. host checks the guess is a valid English word in case-insensitive
@@ -35,7 +36,7 @@ loop until either player guess correctly or on a allowed rounds:
 
 
 ## Running the service
-### Demo mode
+### For dmeo
 This mode is for demonstration, the 5-letter word list is using db records(14855 words).
 1. Clone the repository:
    ```
@@ -51,7 +52,9 @@ Server api doc: http://0.0.0.0:8710/docs.
 
 Then open http://localhost:8711.
 
-### Dev mode
+###
+
+### For development
 This mode is for development, with features:
 - will restart and reload updated changes on save.
 - can override possible word list by changing `WORD_LIST` in `.env`.
@@ -90,6 +93,11 @@ Then open http://localhost:8711.
 Server api doc: http://0.0.0.0:8010/docs.
 Then open http://localhost:8701/.
 
+### Run test case
+To run tests with verbose output:
+```sh
+pytest -v
+```
 
 ## Service features
 ### Game mode

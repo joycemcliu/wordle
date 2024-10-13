@@ -15,7 +15,11 @@
   },
   "files.associations": {
     ".pt": "html"
-  }
+  },
+  "python.testing.pytestArgs": [
+    "server"
+  ],
+  "python.testing.pytestEnabled": true
   // "xml.format.maxLineWidth": 0,
   // "xml.preferences.quoteStyle": "double"
 }

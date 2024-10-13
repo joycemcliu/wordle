@@ -96,7 +96,7 @@ Then open http://localhost:8701/.
 ### Run test case
 To run tests with verbose output:
 ```sh
-pytest -v
+PYTHONPATH=server pytest -v
 ```
 
 ## Service features

@@ -1,8 +1,9 @@
 from game_guess import (
     Hint,
     compare_two_words,
+    filter_by_history,
     filter_candidates,
-    get_highest_word,
+    get_highest_words,
     get_lowest_words,
 )
 
@@ -39,12 +40,12 @@ def test_compare_two_words_no_match():
 def test_get_highest_word():
     word = "world"
     candidates = ["fancy", "panic", "crazy", "buggy"]
-    expected_highest = "crazy"
-    expected_hint = (
+    expected_highest = ["crazy"]
+    expected_hint = [
         Hint.MISS.value + Hint.MISS.value + Hint.PRESENT.value + Hint.MISS.value + Hint.MISS.value
-    )
+    ]
 
-    highest, hint = get_highest_word(word, candidates)
+    highest, hint = get_highest_words(word, candidates)
 
     assert highest == expected_highest, f"Expected {expected_highest}, but got {highest}"
     assert hint == expected_hint, f"Expected {expected_hint}, but got {hint}"
@@ -80,3 +81,39 @@ def test_get_lowest_words():
 
     assert lowest == expected_lowest, f"Expected {expected_lowest}, but got {lowest}"
     assert lowest_hint == expected_hint, f"Expected {expected_hint}, but got {lowest_hint}"
+
+
+def test_filter_by_history_removes_word():
+    word = "apple"
+    hint = Hint.MISS.value * len(word)
+    candidates = ["apple", "banana", "cherry", "buggy"]
+    expected_candidates = ["buggy"]
+
+    filtered_candidates = filter_by_history(word, hint, candidates)
+    assert (
+        filtered_candidates == expected_candidates
+    ), f"Expected {expected_candidates}, but got {filtered_candidates}"
+
+
+def test_filter_by_history_removes_word2():
+    word = "apple"
+    hint = Hint.MISS.value * len(word)
+    candidates = ["buggy", "foggy", "crazy", "daisy"]
+    expected_candidates = ["buggy", "foggy"]
+
+    filtered_candidates = filter_by_history(word, hint, candidates)
+    assert (
+        filtered_candidates == expected_candidates
+    ), f"Expected {expected_candidates}, but got {filtered_candidates}"
+
+
+def test_filter_by_history_removes_word3():
+    word = "apple"
+    hint = Hint.MISS.value + Hint.MISS.value + Hint.PRESENT.value + Hint.MISS.value + Hint.HIT.value
+    candidates = ["buggy", "foggy", "crazy", "daisy", "apple", "ahead"]
+    expected_candidates = ["buggy", "foggy"]
+
+    filtered_candidates = filter_by_history(word, hint, candidates)
+    assert (
+        filtered_candidates == expected_candidates
+    ), f"Expected {expected_candidates}, but got {filtered_candidates}"

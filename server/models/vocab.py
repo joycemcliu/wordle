@@ -4,8 +4,10 @@ import datetime
 import logging
 import random
 import uuid
+from collections.abc import Mapping
 
 import sqlalchemy as sa
+from config import Hint
 from models.base import BaseModel, uuid_v7
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import UUID
@@ -96,3 +98,23 @@ class Vocabulary(BaseModel):
     async def get_all_word_lengths(cls, db: AsyncSession) -> list[int]:
         result = await db.execute(select(func.distinct(cls.length)).order_by(cls.length))
         return [row[0] for row in result.fetchall()]
+
+    @classmethod
+    async def get_random_word_by_length(
+        cls, db: AsyncSession, length: int, maps: Mapping[str, str], count: int
+    ) -> list[Vocabulary]:
+        query = select(cls).where(cls.length == length)
+
+        for word, hint in maps.items():
+            for idx, (char, symbol) in enumerate(zip(word, hint)):
+                if symbol == Hint.HIT.value:  # Exact match
+                    query = query.where(func.substr(cls.word, idx + 1, 1) == char)
+                elif symbol == Hint.PRESENT.value:  # Present but not in the same position
+                    query = query.where(cls.word.contains(char)).where(
+                        func.substr(cls.word, idx + 1, 1) != char
+                    )
+                elif symbol == Hint.MISS.value:  # Not present at all
+                    query = query.where(~cls.word.contains(char))
+
+        result = await db.execute(query.order_by(func.random()).limit(count))
+        return result.scalars().all()

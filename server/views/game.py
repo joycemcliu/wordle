@@ -14,8 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.game_guess import (  # noqa
     Hint,
     compare_two_words,
+    filter_by_history,
     filter_candidates,
-    get_highest_word,
+    get_highest_words,
     get_lowest_words,
 )
 
@@ -171,10 +172,33 @@ async def submit_guess(
             # Normal wordle game comparison
             hint, _ = compare_two_words(word=guess, ref=candidates[0])
         else:
-            highest, hint = get_highest_word(guess, candidates)
-            update = filter_candidates(highest, hint, candidates)
+            highest, hint = get_highest_words(guess, candidates)
+            # Filter candidates by highest score words
+            update = set(candidates)
+            for i in range(len(highest)):
+                remain = filter_candidates(highest[i], hint[i], candidates)
+                update = update.intersection(remain)
+            update = list(update)
+
+            # Filter candidates by history - not violate the history
+            remaining = set(update)
+            for record in history:
+                remain = filter_by_history(record.word, record.hint, update)
+                remaining = remaining.intersection(remain)
+            update = list(remaining)
+
             if len(update) > 0:
                 candidates = update
+            elif len(update) == 0:
+                # pick a random word from db
+                history_map = {h.word: h.hint for h in history}
+                pick = await VocabModel.get_random_word_by_length(db, len(guess), history_map, 1)
+                if pick:
+                    candidates = [p.word for p in pick]
+                else:
+                    candidates = [guess]  # the player wins!
+                log.debug(f"no candidates left, pick random word: {candidates=}")
+
             lowest, hints = get_lowest_words(guess, candidates)
             hint = hints[0]
             if len(lowest) > 1:

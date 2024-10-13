@@ -1,3 +1,4 @@
+import enum
 import os
 
 ENV = os.environ.get("ENV", "dev")
@@ -20,3 +21,9 @@ else:
         "buggy",
         "scare",
     ]
+
+
+class Hint(enum.Enum):
+    HIT = "0"
+    PRESENT = "?"
+    MISS = "_"

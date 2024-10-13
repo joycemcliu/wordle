@@ -59,7 +59,6 @@ class Game(BaseModel):
             f"answer={self.answer}\n"
             f"max_rounds={self.max_rounds}\n"
             f"num_attempts={self.num_attempts}\n"
-            f"score={self.score}\n"
             f">"
         )
 

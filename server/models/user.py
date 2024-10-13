@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import uuid
 
 import sqlalchemy as sa
 from models.base import BaseModel, uuid_v7
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
+
+log = logging.getLogger(__name__)
 
 
 class User(BaseModel):
@@ -50,11 +53,12 @@ class User(BaseModel):
     async def get(cls, db: AsyncSession, id: str):
         try:
             transaction = await db.get(cls, id)
-        except NoResultFound:
+        except Exception as e:
+            log.error(f"Error getting user: {e}")
             return None
         return transaction
-    @classmethod
 
+    @classmethod
     @classmethod
     async def create(cls, db: AsyncSession, id=None, name=None, **kwargs) -> User:
         if not id:

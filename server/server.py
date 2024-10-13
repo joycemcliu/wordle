@@ -4,7 +4,7 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
-from config import ENV
+from config import DB_URL, ENV
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from middleware.custom_logging import logger_config, setup_logging
@@ -25,9 +25,8 @@ async def lifespan(app: FastAPI):
     Function that handles startup and shutdown events.
     To understand more, read https://fastapi.tiangolo.com/advanced/events/
     """
-    url = os.environ.get("POSTGRES_URL")
-    run_migrations(url)
-    init_db_session(url.replace("postgresql", "postgresql+asyncpg"))
+    run_migrations(DB_URL)
+    init_db_session(DB_URL.replace("postgresql", "postgresql+asyncpg"))
 
     yield
     if sessionmanager._engine is not None:

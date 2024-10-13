@@ -20,7 +20,7 @@ let Hint_ENUM = {
 };
 
 const maxCols = 5;
-let maxRows = 0;
+let maxRows = 6;
 let currentRow = 0;
 let currentCol = 0;
 let currentCellId = 0;
@@ -79,9 +79,15 @@ function getGameHistory() {
         getNewGame();
         return;
     }
+
     fetch(api_base + "/v1/game/" + id, {
         method: "GET"
-    }).then(response => response.json()).then(game => {
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error(response.status);
+        }
+        return response.json();
+    }).then(game => {
         id = game.id;
         maxRows = game.max_rounds;
         numAttempts.setNumAttemptsValue(maxRows);
@@ -120,15 +126,25 @@ function getGameHistory() {
             gameActive = false;
         }
     }).catch(error => {
+        if (error.message == 404) {
+            eraseCookie("wordle_game");
+            eraseCookie("wordle_user");
+            id = "";
+            user = "";
+            getNewGame();
+            return;
+        }
         console.error("error", error);
         updateGuessMsg(error.message, "red");
+        // retry after 1 second
+        setTimeout(getGameHistory, 1000);
     });
 }
 
 function getNewGame() {
     eraseCookie("wordle_game");
     if (numAttempts.getNumAttempts() < 1) {
-        numAttempts.setNumAttemptsValue(6);
+        numAttempts.setNumAttemptsValue(maxRows);
     }
     maxRows = numAttempts.getNumAttempts();
 

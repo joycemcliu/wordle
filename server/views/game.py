@@ -68,6 +68,8 @@ async def new_game(
         user = await UserModel.create(db)
     else:
         user = await UserModel.get(db, user_id)
+        if user is None:
+            user = await UserModel.create(db, id=user_id)
 
     if not num_attempts or num_attempts < 1:
         num_attempts = DEFAULT_MAX_ATTEMPTS

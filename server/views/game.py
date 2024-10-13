@@ -106,7 +106,8 @@ async def submit_guess(
     if vocab is None:
         raise HTTPException(status_code=400, detail="Not a valid word")
 
-    last_history = await GameHistory.get_last_by_game_id(db, game.id)
+    history = await GameHistory.get_by_game_id(db, game.id)
+    last_history = history[-1] if history else None
     candidates = []
     if last_history is None:
         candidates: list[str] = game.answer.split(",")
@@ -117,22 +118,30 @@ async def submit_guess(
     if len(guess) != len(candidates[0]):
         raise HTTPException(status_code=400, detail="Invalid guess length")
 
-    # Compare guess with answer
     hint = ""
-    if len(candidates) == 1:
-        # Normal wordle game comparison
-        hint, _ = compare_two_words(word=guess, ref=candidates[0])
-    else:
-        highest, hint = get_highest_word(guess, candidates)
-        update = filter_candidates(highest, hint, candidates)
-        if len(update) > 0:
-            candidates = update
-        lowest, hints = get_lowest_words(guess, candidates)
-        hint = hints[0]
-        if len(lowest) > 1:
-            answer = random.choice(lowest)
-            hint = hints[lowest.index(answer)]
-            candidates = [answer]
+    # Not update candidates if the guess is already in the history
+    for h in history:
+        if guess == h.word:
+            log.debug(f"Found guess in history: {h}")
+            hint = h.hint
+            break
+
+    # Compare guess with answer
+    if hint == "":
+        if len(candidates) == 1:
+            # Normal wordle game comparison
+            hint, _ = compare_two_words(word=guess, ref=candidates[0])
+        else:
+            highest, hint = get_highest_word(guess, candidates)
+            update = filter_candidates(highest, hint, candidates)
+            if len(update) > 0:
+                candidates = update
+            lowest, hints = get_lowest_words(guess, candidates)
+            hint = hints[0]
+            if len(lowest) > 1:
+                answer = random.choice(lowest)
+                hint = hints[lowest.index(answer)]
+                candidates = [answer]
 
     # Update game status
     history = GameHistory(game_id=game.id, word=guess, answer=",".join(candidates))

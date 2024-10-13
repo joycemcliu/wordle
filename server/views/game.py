@@ -61,7 +61,7 @@ class GetGameHistoryResp(NewGameResp):
 async def new_game(
     user_id: str | None = None,
     num_attempts: int | None = None,
-    mode: str = "multi",
+    mode: str = "hard",
     db: AsyncSession = Depends(get_db_session),
 ):
     if not user_id:
@@ -72,13 +72,13 @@ async def new_game(
     if not num_attempts or num_attempts < 1:
         num_attempts = DEFAULT_MAX_ATTEMPTS
 
-    if mode != "multi":
+    if mode != "hard":
         # Get Single word
         vocab = await VocabModel.get_random_word(db, DEFAULT_LEN_WORD)
-        candidates = [vocab.word]
+        candidates = vocab.word
         # for development testing
         if ENV == "dev":
-            candidates = [VocabModel.get_random_word_from_list(DEFAULT_WORD_LIST)]
+            candidates = VocabModel.get_random_word_from_list(DEFAULT_WORD_LIST)
     else:
         # Get multiple words
         words = await VocabModel.get_random_words(db, DEFAULT_LEN_WORD, max(num_attempts - 2, 5))

@@ -56,6 +56,22 @@ class Cell {
     }
 }
 
+class GameMode {
+    constructor() {
+        this.mode = document.getElementById("game-mode").value;
+
+        this.gameMode = document.getElementById("game-mode");
+        this.gameMode.addEventListener("change", () => {
+            this.mode = this.gameMode.value;
+        });
+    }
+    getGameMode() {
+        return this.gameMode.value;
+    }
+}
+const gameMode = new GameMode();
+getGameHistory();
+
 // Game control logic
 function getGameHistory() {
     if (!id) {
@@ -115,7 +131,7 @@ function getNewGame() {
     }
     maxRows = numAttempts.getNumAttempts();
 
-    fetch(api_base + "/v1/game/new?num_attempts=" + maxRows, {
+    fetch(api_base + "/v1/game/new?mode=" + gameMode.getGameMode() + "&num_attempts=" + maxRows, {
         method: "GET"
     }).then(response => response.json()).then(game => {
         if (game.id) {

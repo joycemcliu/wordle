@@ -41,6 +41,15 @@ body {
     text-align: center;
 }
 
+select#game-mode {
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
 .new-game-button {
     background-color: #f44336;
     border: none;

@@ -26,6 +26,12 @@
                 <label for="num-attempts">Max Attempts:</label>
                 <input type="number" id="num-attempts" class="num-attempts" value="6" min="1" max="20">
             </div>
+            <dropdown>
+                <label for="game-mode">Mode:</label>
+                <select id="game-mode" name="game-mode">
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard</option>
+                </select>
             <button class="new-game-button" onclick="newGame()">New Game</button>
         </div>
     </div>

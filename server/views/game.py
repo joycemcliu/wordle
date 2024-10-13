@@ -21,7 +21,7 @@ from src.game_guess import (  # noqa
 
 log = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/game")
+router = APIRouter(prefix="/game", tags=["game"])
 
 
 class NewGameResp(BaseModel):

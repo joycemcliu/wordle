@@ -51,12 +51,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.include_router(game.router, prefix="/v1")
 
 
 @app.get("/health")
 async def health():
     return
+
+
+app.include_router(game.router, prefix="/v1", tags=["game"])
 
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ loop until either player guess correctly or on a allowed rounds:
 
 ## Running the service
 ### For dmeo
-This mode is for demonstration, the 5-letter word list is using db records(14855 words).
+This mode is for demonstration, the 5-letter word list is using list: [hello,world,quite,fancy,fresh,panic,crazy,buggy,scare]
 1. Clone the repository:
    ```
    git clone <repository-url>
@@ -103,6 +103,7 @@ pytest -v
 ### Game mode
 - Normal wordle by selecting "normal" in page
 - Host cheating wordle by selecting "hard" in page.
+   - Enhance "host cheating" difficutly by not updating a list of word candidates if the guess already in the previous history
 - Adjustable number of attemps. (client restriction: min=1, max=20).
 
 ### UI/UX
@@ -116,6 +117,7 @@ pytest -v
 ### Server implementation
 - Postgres
    - Vocabulary: store possible words and corresponding length
+      - pre-defined 14,855 5-letter words.
       - for checking if a guess is a valid English word
       - for selecting answer candidates
    - User: store username

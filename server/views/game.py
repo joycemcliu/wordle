@@ -87,15 +87,17 @@ async def new_game(
         # Get a single word
         vocab = await VocabModel.get_random_word(db, req.word_length)
         candidates = [vocab.word] if vocab else []
-        # for development testing
-        if ENV == "dev":
+
+        # for demo and testing
+        if ENV in ["demo", "dev"]:
             candidates = [VocabModel.get_random_word_from_list(DEFAULT_WORD_LIST)]
     else:
         # Get multiple words
         words = await VocabModel.get_random_words(db, req.word_length, max(req.num_attempts - 2, 5))
         candidates = [w.word for w in words]
-        # for development testing
-        if ENV == "dev":
+
+        # for demo and testing
+        if ENV in ["demo", "dev"]:
             candidates = list(DEFAULT_WORD_LIST)
 
     log.debug(f"{candidates=}")
@@ -146,7 +148,8 @@ async def submit_guess(
         raise HTTPException(status_code=400, detail="Invalid guess length")
 
     hint = ""
-    # Not update candidates if the guess is already in the history
+    # Enhance host cheating wordle difficulty by
+    # not update candidates if the guess is already in the history
     for h in history:
         if guess == h.word:
             log.debug(f"Found guess in history: {h}")

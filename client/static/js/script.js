@@ -27,6 +27,7 @@ let currentCellId = 0;
 let guess = '';
 
 let id = getCookie("wordle_game");
+let user = getCookie("wordle_user");
 let gameActive = true;
 
 class NumAttempts {
@@ -44,7 +45,7 @@ class NumAttempts {
     }
 }
 const numAttempts = new NumAttempts();
-getGameHistory();
+
 
 class Cell {
     static getCell(row, col, offset = 0) {
@@ -131,12 +132,18 @@ function getNewGame() {
     }
     maxRows = numAttempts.getNumAttempts();
 
-    fetch(api_base + "/v1/game/new?mode=" + gameMode.getGameMode() + "&num_attempts=" + maxRows, {
+    let url = api_base + "/v1/game/new?mode=" + gameMode.getGameMode() + "&num_attempts=" + maxRows;
+    if (user) {
+        url += "&user_id=" + user;
+    }
+    fetch(url, {
         method: "GET"
     }).then(response => response.json()).then(game => {
         if (game.id) {
             setCookie("wordle_game", game.id, 1);
+            setCookie("wordle_user", game.user_id, 7);
             id = game.id;
+            user = game.user_id;
         }
     });
     createGuessContainer(maxRows, maxCols);

@@ -29,6 +29,7 @@ class NewGameResp(BaseModel):
     user_id: UUID
     max_rounds: int
     num_attempts: int
+    word_length: int
     is_end: bool
 
     class Config:
@@ -52,6 +53,13 @@ class GameHistoryItem(BaseModel):
         orm_mode = True
 
 
+class NewGameReq(BaseModel):
+    user_id: str | None = None
+    num_attempts: int | None = None
+    word_length: int | None = None
+    mode: str = "hard"
+
+
 class GetGameHistoryResp(NewGameResp):
     answer: str = ""
     history: list[GameHistoryItem] = []
@@ -59,38 +67,49 @@ class GetGameHistoryResp(NewGameResp):
 
 @router.get("/new", response_model=NewGameResp)
 async def new_game(
-    user_id: str | None = None,
-    num_attempts: int | None = None,
-    mode: str = "hard",
+    req: NewGameReq = Depends(),
     db: AsyncSession = Depends(get_db_session),
 ):
-    if not user_id:
+    if not req.user_id:
         user = await UserModel.create(db)
     else:
-        user = await UserModel.get(db, user_id)
+        user = await UserModel.get(db, req.user_id)
         if user is None:
-            user = await UserModel.create(db, id=user_id)
+            user = await UserModel.create(db, id=req.user_id)
 
-    if not num_attempts or num_attempts < 1:
-        num_attempts = DEFAULT_MAX_ATTEMPTS
+    if not req.num_attempts or req.num_attempts < 1:
+        req.num_attempts = DEFAULT_MAX_ATTEMPTS
 
-    if mode != "hard":
-        # Get Single word
-        vocab = await VocabModel.get_random_word(db, DEFAULT_LEN_WORD)
-        candidates = vocab.word
+    if not req.word_length or req.word_length < 1:
+        req.word_length = DEFAULT_LEN_WORD
+
+    if req.mode != "hard":
+        # Get a single word
+        vocab = await VocabModel.get_random_word(db, req.word_length)
+        candidates = [vocab.word] if vocab else []
         # for development testing
         if ENV == "dev":
-            candidates = VocabModel.get_random_word_from_list(DEFAULT_WORD_LIST)
+            candidates = [VocabModel.get_random_word_from_list(DEFAULT_WORD_LIST)]
     else:
         # Get multiple words
-        words = await VocabModel.get_random_words(db, DEFAULT_LEN_WORD, max(num_attempts - 2, 5))
-        candidates = ",".join([w.word for w in words])
+        words = await VocabModel.get_random_words(db, req.word_length, max(req.num_attempts - 2, 5))
+        candidates = [w.word for w in words]
         # for development testing
         if ENV == "dev":
-            candidates = ",".join(DEFAULT_WORD_LIST)
+            candidates = list(DEFAULT_WORD_LIST)
 
     log.debug(f"{candidates=}")
-    game = await GameModel.create(db, user_id=user.id, answer=candidates, max_rounds=num_attempts)
+    if not candidates or len(candidates[0]) != req.word_length:
+        raise HTTPException(status_code=500, detail="No words found")
+
+    candidates = ",".join(candidates)
+    game = await GameModel.create(
+        db,
+        user_id=user.id,
+        answer=candidates,
+        max_rounds=req.num_attempts,
+        word_length=req.word_length,
+    )
     log.info(f"New game created: {game}")
     return game
 
@@ -178,6 +197,7 @@ async def submit_guess(
         user_id=game.user_id,
         max_rounds=game.max_rounds,
         num_attempts=game.num_attempts,
+        word_length=game.word_length,
         is_end=game.is_end,
         hint=hint,
         answer=answer_to_player,

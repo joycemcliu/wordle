@@ -47,6 +47,7 @@ class Game(BaseModel):
     answer = sa.Column(sa.String, nullable=False)
     max_rounds = sa.Column(sa.Integer, nullable=False)
     num_attempts = sa.Column(sa.Integer, nullable=False, default=0)
+    word_length = sa.Column(sa.Integer, nullable=False)
     is_end = sa.Column(sa.Boolean, nullable=False, index=True, default=False)
 
     def __str__(self):
@@ -59,6 +60,7 @@ class Game(BaseModel):
             f"answer={self.answer}\n"
             f"max_rounds={self.max_rounds}\n"
             f"num_attempts={self.num_attempts}\n"
+            f"word_length={self.word_length}\n"
             f">"
         )
 
@@ -78,9 +80,14 @@ class Game(BaseModel):
         return (await db.execute(select(cls))).scalars().all()
 
     @classmethod
-    async def create(cls, db: AsyncSession, user_id, answer, max_rounds, **kwargs):
+    async def create(cls, db: AsyncSession, user_id, answer, max_rounds, word_length, **kwargs):
         transaction = cls(
-            id=uuid_v7(), user_id=user_id, answer=answer, max_rounds=max_rounds, **kwargs
+            id=uuid_v7(),
+            user_id=user_id,
+            answer=answer,
+            max_rounds=max_rounds,
+            word_length=word_length,
+            **kwargs,
         )
         db.add(transaction)
         await db.commit()

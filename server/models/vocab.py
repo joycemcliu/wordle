@@ -91,3 +91,8 @@ class Vocabulary(BaseModel):
             .scalars()
             .all()
         )
+
+    @classmethod
+    async def get_all_word_lengths(cls, db: AsyncSession) -> list[int]:
+        result = await db.execute(select(func.distinct(cls.length)).order_by(cls.length))
+        return [row[0] for row in result.fetchall()]

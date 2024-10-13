@@ -65,6 +65,15 @@ class GetGameHistoryResp(NewGameResp):
     history: list[GameHistoryItem] = []
 
 
+@router.get("/word_lengths")
+async def get_all_word_lengths(
+    db: AsyncSession = Depends(get_db_session),
+) -> list[int]:
+    if ENV in ["demo", "dev"]:
+        return [DEFAULT_LEN_WORD]
+    return await VocabModel.get_all_word_lengths(db)
+
+
 @router.get("/new", response_model=NewGameResp)
 async def new_game(
     req: NewGameReq = Depends(),

@@ -152,7 +152,7 @@ async def submit_guess(
         candidates: list[str] = game.answer.split(",")
     else:
         candidates: list[str] = last_history.answer.split(",")
-    log.debug(f"current: {candidates=}")
+    log.debug(f"current: {candidates=} {guess=}")
 
     if len(guess) != len(candidates[0]):
         raise HTTPException(status_code=400, detail="Invalid guess length")
@@ -172,39 +172,42 @@ async def submit_guess(
             # Normal wordle game comparison
             hint, _ = compare_two_words(word=guess, ref=candidates[0])
         else:
-            highest, hint = get_highest_words(guess, candidates)
-            # Filter candidates by highest score words
+            # Filter candidates by history
+            # ensure the candidation not violate the history
             update = set(candidates)
-            for i in range(len(highest)):
-                remain = filter_candidates(highest[i], hint[i], candidates)
-                update = update.intersection(remain)
-            update = list(update)
-
-            # Filter candidates by history - not violate the history
-            remaining = set(update)
             for record in history:
                 remain = filter_by_history(record.word, record.hint, update)
-                remaining = remaining.intersection(remain)
-            update = list(remaining)
+                update = update.intersection(remain)
+            candidates = list(update)
+            log.debug(f"history: {update=}")
 
-            if len(update) > 0:
-                candidates = update
-            elif len(update) == 0:
-                # pick a random word from db
-                history_map = {h.word: h.hint for h in history}
-                pick = await VocabModel.get_random_word_by_length(db, len(guess), history_map, 1)
-                if pick:
-                    candidates = [p.word for p in pick]
+            if len(candidates) > 1:
+                # Filter candidates by highest score words
+                highest, hint = get_highest_words(guess, candidates)
+                update = set(candidates)
+                for i in range(len(highest)):
+                    remain = filter_candidates(highest[i], hint[i], update)
+                    update = update.intersection(remain)
+                update = list(update)
+                log.debug(f"highest: {update=}")
+
+                if len(update) > 0:
+                    candidates = update
                 else:
-                    candidates = [guess]  # the player wins!
-                log.debug(f"no candidates left, pick random word: {candidates=}")
+                    candidates = [random.choice(candidates)]
+                log.debug(f"remaining: {candidates=}")
 
-            lowest, hints = get_lowest_words(guess, candidates)
-            hint = hints[0]
-            if len(lowest) > 1:
-                answer = random.choice(lowest)
-                hint = hints[lowest.index(answer)]
-                candidates = [answer]
+            log.debug(f"final candidates: {candidates=}")
+            # update hint
+            hint = list(Hint.MISS.value * len(guess))
+            for i in range(len(guess)):
+                w = guess[i]
+                # if all candidates have the same letter, then it's a PRESENT
+                log.debug(f"check {w=} {all(w in c for c in candidates)=}")
+                if all(w in c for c in candidates):
+                    hint[i] = Hint.PRESENT.value
+            hint = "".join(hint)
+            log.debug(f"update hint: {hint=}")
 
     # Update game status
     history = GameHistory(game_id=game.id, word=guess, answer=",".join(candidates))

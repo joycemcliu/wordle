@@ -185,18 +185,12 @@ Which is implemented on `./client`, provides service to player by:
 Host cheating wordle can be played by selecting `hard` on "Mode" dropdown in page and then start by clicking "New Game" button.
 
 Server handle logic: (refer to `./server/views/game.py`'s `submit_guess()` )
-1. select a list of words(named `candidates`) by:
+1) select a list of words(named `candidates`) by:
    - (`ENV=dev/demo`) default list: [hello,world,quite,fancy,fresh,panic,crazy,buggy,scare]) or
    - (`ENV!=dev/demo`) random pick `max(5, num_of_attempts_player_selected - 2)` words from db(ie. `Vocabulary` table)
-2. received player guess and update `candidates` by:
+2) received player guess and update `candidates` by:
    1. if guess appear previous -> return previous hint
-   1. get the highest score words and corresponding hints in `candidates`
-   2. filter out highest score words from `candidates`
-   3. filter out words from `candidates` that violate highest score words and hints
-   4. filter out words from `candidates` that violate previous hints
-   5. update `candidates` by:
-      - if the remaining `candidates` is empty, then pick a new valid word from db
-      - if the remaining `candidates` is =1, then pick that word as answer
-      - if the remaining `candidates` is >1, then find the lowest score words and hints
-         - if Num_of(lowest score words) > 1, then random pick one
-   6. return hint
+   2. filter out words from `candidates` that violate highest score words and hints
+   3. update `candidates` if words after filtered out words from `candidates` that violate previous hints remains > 1
+   4. update hint by comparing `guess` and `candidates`
+   5. return hint

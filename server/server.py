@@ -25,9 +25,12 @@ async def lifespan(app: FastAPI):
     Function that handles startup and shutdown events.
     To understand more, read https://fastapi.tiangolo.com/advanced/events/
     """
-    run_migrations(DB_URL)
-    init_db_session(DB_URL.replace("postgresql", "postgresql+asyncpg"))
-
+    try:
+        run_migrations(DB_URL)
+        init_db_session(DB_URL.replace("postgresql", "postgresql+asyncpg"))
+    except Exception as e:
+        logger.error(f"Error connecting to DB: {e}")
+        sys.exit(1)
     yield
     if sessionmanager._engine is not None:
         await sessionmanager.close()

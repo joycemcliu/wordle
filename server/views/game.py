@@ -2,7 +2,7 @@ import logging
 import random
 from uuid import UUID
 
-from config import DEFAULT_LEN_WORD, DEFAULT_MAX_ATTEMPTS  # noqa
+from config import DEFAULT_LEN_WORD, DEFAULT_MAX_ATTEMPTS, DEFAULT_WORD_LIST, ENV  # noqa
 from fastapi import APIRouter, Depends, HTTPException
 from models.game import Game as GameModel
 from models.game_history import GameHistory
@@ -57,13 +57,11 @@ class GetGameHistoryResp(NewGameResp):
     history: list[GameHistoryItem] = []
 
 
-words_list = ["hello", "world", "quite", "fancy", "fresh", "panic", "crazy", "buggy", "scare"]
-
-
 @router.get("/new", response_model=NewGameResp)
 async def new_game(
     user_id: str | None = None,
     num_attempts: int | None = None,
+    mode: str = "multi",
     db: AsyncSession = Depends(get_db_session),
 ):
     if not user_id:
@@ -74,14 +72,22 @@ async def new_game(
     if not num_attempts or num_attempts < 1:
         num_attempts = DEFAULT_MAX_ATTEMPTS
 
-    # vocab = await VocabModel.get_random_word(db, DEFAULT_LEN_WORD)
-    # word = vocab.word
-    # word = VocabModel.get_random_word_from_list(words_list)  # for testing
-    # words = await VocabModel.get_random_words(db, DEFAULT_LEN_WORD, max(num_attempts - 2, 3))
-    # candidates = ",".join([w.word for w in words])
-    candidates = ",".join(words_list)
-    print(f"{candidates=}")
+    if mode != "multi":
+        # Get Single word
+        vocab = await VocabModel.get_random_word(db, DEFAULT_LEN_WORD)
+        candidates = [vocab.word]
+        # for development testing
+        if ENV == "dev":
+            candidates = [VocabModel.get_random_word_from_list(DEFAULT_WORD_LIST)]
+    else:
+        # Get multiple words
+        words = await VocabModel.get_random_words(db, DEFAULT_LEN_WORD, max(num_attempts - 2, 5))
+        candidates = ",".join([w.word for w in words])
+        # for development testing
+        if ENV == "dev":
+            candidates = ",".join(DEFAULT_WORD_LIST)
 
+    log.debug(f"{candidates=}")
     game = await GameModel.create(db, user_id=user.id, answer=candidates, max_rounds=num_attempts)
     log.info(f"New game created: {game}")
     return game

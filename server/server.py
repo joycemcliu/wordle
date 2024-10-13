@@ -4,6 +4,7 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
+from config import ENV
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from middleware.custom_logging import logger_config, setup_logging
@@ -57,5 +58,5 @@ async def health():
 
 
 if __name__ == "__main__":
-    realod = os.environ.get("ENV", "dev") == "dev"
+    realod = ENV == "dev"
     uvicorn.run("server:app", host="0.0.0.0", port=8010, reload=realod, log_config=logger_config)

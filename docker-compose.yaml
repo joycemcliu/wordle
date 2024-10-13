@@ -27,6 +27,7 @@ services:
       - ENV
       - POSTGRES_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/wordle
       - CLIENT_PORT
+      - WORD_LIST
     depends_on:
       - "postgres"
     ports:

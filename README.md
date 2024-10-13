@@ -8,11 +8,7 @@
    cd <repository-name>
    ```
 
-2. Copy .env.example to .env and fill in the necessary environment variables:
-    ```
-    cp .env.sample .env
-    ```
-3. Start Service by:
+2. Start Service by:
     ```sh
     docker compose up -d
     ```

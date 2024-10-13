@@ -12,4 +12,8 @@ def run_migrations(dsn: str) -> None:
     alembic_cfg = Config()
     alembic_cfg.set_main_option("script_location", script_location.as_posix())
     alembic_cfg.set_main_option("sqlalchemy.url", dsn)
-    command.upgrade(alembic_cfg, "head")
+    try:
+        command.upgrade(alembic_cfg, "head")
+    except Exception as e:
+        print(f"Error running migrations: {e}")
+        exit(1)

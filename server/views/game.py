@@ -18,6 +18,7 @@ from src.game_guess import (  # noqa
     filter_candidates,
     get_highest_words,
     get_lowest_words,
+    update_candidate_by_host_cheating_rule,
 )
 
 log = logging.getLogger(__name__)
@@ -157,64 +158,7 @@ async def submit_guess(
     if len(guess) != len(candidates[0]):
         raise HTTPException(status_code=400, detail="Invalid guess length")
 
-    hint = ""
-    # Enhance host cheating wordle difficulty by
-    # not update candidates if the guess is already in the history
-    for h in history:
-        if guess == h.word:
-            log.debug(f"Found guess in history: {h}")
-            hint = h.hint
-            break
-
-    # Compare guess with answer
-    if hint == "":
-        if len(candidates) == 1:
-            # Normal wordle game comparison
-            hint, _ = compare_two_words(word=guess, ref=candidates[0])
-        else:
-            # Filter candidates by history
-            # ensure the candidation not violate the history
-            update = set(candidates)
-            for record in history:
-                remain = filter_by_history(record.word, record.hint, update)
-                update = update.intersection(remain)
-            candidates = list(update)
-            log.debug(f"history: {update=}")
-
-            if len(candidates) > 1:
-                # Filter candidates by highest score words
-                highest, hint = get_highest_words(guess, candidates)
-                update = set(candidates)
-                for i in range(len(highest)):
-                    remain = filter_candidates(highest[i], hint[i], update)
-                    update = update.intersection(remain)
-                update = list(update)
-                log.debug(f"highest: {update=}")
-
-                if len(update) > 0:
-                    candidates = update
-                else:
-                    update = list(candidates)
-                    [update.remove(h) for h in highest]
-                    lowest, _ = get_lowest_words(guess, update)
-                    log.debug(f"lowest: {lowest=}")
-                    candidates = [random.choice(lowest)]
-                log.debug(f"remaining: {candidates=}")
-
-            log.debug(f"final candidates: {candidates=}")
-            if len(candidates) == 1:
-                hint, _ = compare_two_words(word=guess, ref=candidates[0])
-            else:
-                # update hint
-                hint = list(Hint.MISS.value * len(guess))
-                for i in range(len(guess)):
-                    w = guess[i]
-                    # if all candidates have the same letter, then it's a PRESENT
-                    log.debug(f"check {w=} {all(w in c for c in candidates)=}")
-                    if all(w in c for c in candidates):
-                        hint[i] = Hint.PRESENT.value
-                hint = "".join(hint)
-            log.debug(f"update hint: {hint=}")
+    hint, candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
 
     # Update game status
     history = GameHistory(game_id=game.id, word=guess, answer=",".join(candidates))

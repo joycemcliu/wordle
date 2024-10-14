@@ -5,6 +5,7 @@ from game_guess import (
     filter_candidates,
     get_highest_words,
     get_lowest_words,
+    update_candidate_by_host_cheating_rule,
 )
 
 
@@ -117,3 +118,143 @@ def test_filter_by_history_removes_word3():
     assert (
         filtered_candidates == expected_candidates
     ), f"Expected {expected_candidates}, but got {filtered_candidates}"
+
+
+class MockHistoryRecord:
+    def __init__(self, word: str, hint: str):
+        self.word = word
+        self.hint = hint
+
+
+def test_guess_in_history():
+    history = [MockHistoryRecord(word="hello", hint=Hint.MISS.value * 5)]
+    guess = "world"
+    candidates = ["fancy", "panic", "crazy", "buggy"]
+    expected_hint = Hint.MISS.value * 5
+    expected_candidates = ["fancy", "panic", "buggy"]
+
+    hint, remaining_candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
+    assert hint == expected_hint, f"Expected {expected_hint}, but got {hint}"
+    assert set(remaining_candidates) == set(
+        expected_candidates
+    ), f"Expected {expected_candidates}, but got {remaining_candidates}"
+
+
+def test_guess_in_history2():
+    history = [
+        MockHistoryRecord(word="hello", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(word="world", hint=Hint.MISS.value * 5),
+    ]
+    guess = "fresh"
+    candidates = ["fancy", "panic", "buggy"]
+    expected_hint = Hint.MISS.value * 5
+    expected_candidates = ["panic", "buggy"]
+
+    hint, remaining_candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
+    assert hint == expected_hint, f"Expected {expected_hint}, but got {hint}"
+    assert set(remaining_candidates) == set(
+        expected_candidates
+    ), f"Expected {expected_candidates}, but got {remaining_candidates}"
+
+
+def test_guess_in_history3():
+    history = [
+        MockHistoryRecord(word="hello", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(word="world", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(word="fresh", hint=Hint.MISS.value * 5),
+    ]
+    guess = "crazy"
+    candidates = ["panic", "buggy"]
+    expected_hint = f"{Hint.PRESENT.value}{Hint.MISS.value}{Hint.PRESENT.value}{Hint.MISS.value}{Hint.MISS.value}"
+    expected_candidates = ["panic"]
+
+    hint, remaining_candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
+    assert hint == expected_hint, f"Expected {expected_hint}, but got {hint}"
+    assert set(remaining_candidates) == set(
+        expected_candidates
+    ), f"Expected {expected_candidates}, but got {remaining_candidates}"
+
+
+def test_guess_in_history4():
+    history = [
+        MockHistoryRecord(word="hello", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(word="world", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(word="fresh", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(
+            word="crazy",
+            hint=f"{Hint.PRESENT.value}{Hint.MISS.value}{Hint.PRESENT.value}{Hint.MISS.value}{Hint.MISS.value}",
+        ),
+    ]
+    guess = "quite"
+    candidates = ["panic"]
+    expected_hint = (
+        f"{Hint.MISS.value}{Hint.MISS.value}{Hint.PRESENT.value}{Hint.MISS.value}{Hint.MISS.value}"
+    )
+    expected_candidates = ["panic"]
+
+    hint, remaining_candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
+    assert hint == expected_hint, f"Expected {expected_hint}, but got {hint}"
+    assert set(remaining_candidates) == set(
+        expected_candidates
+    ), f"Expected {expected_candidates}, but got {remaining_candidates}"
+
+
+def test_guess_in_history5():
+    history = [
+        MockHistoryRecord(word="hello", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(word="world", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(word="fresh", hint=Hint.MISS.value * 5),
+        MockHistoryRecord(
+            word="crazy",
+            hint=f"{Hint.PRESENT.value}{Hint.MISS.value}{Hint.PRESENT.value}{Hint.MISS.value}{Hint.MISS.value}",
+        ),
+        MockHistoryRecord(
+            word="quite",
+            hint=f"{Hint.MISS.value}{Hint.MISS.value}{Hint.PRESENT.value}{Hint.MISS.value}{Hint.MISS.value}",
+        ),
+    ]
+    guess = "fancy"
+    candidates = ["panic"]
+    expected_hint = (
+        f"{Hint.MISS.value}{Hint.HIT.value}{Hint.HIT.value}{Hint.PRESENT.value}{Hint.MISS.value}"
+    )
+    expected_candidates = ["panic"]
+
+    hint, remaining_candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
+    assert hint == expected_hint, f"Expected {expected_hint}, but got {hint}"
+    assert set(remaining_candidates) == set(
+        expected_candidates
+    ), f"Expected {expected_candidates}, but got {remaining_candidates}"
+
+
+def test_guess_in_history6():
+    history = []
+    guess = "buggy"
+    candidates = ["hello", "world", "quite", "fancy", "fresh", "panic", "crazy", "buggy", "scare"]
+    expected_hint = Hint.MISS.value * 5
+    expected_candidates = ["hello", "world", "fresh", "panic", "scare"]
+
+    hint, remaining_candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
+    assert hint == expected_hint, f"Expected {expected_hint}, but got {hint}"
+    assert set(remaining_candidates) == set(
+        expected_candidates
+    ), f"Expected {expected_candidates}, but got {remaining_candidates}"
+
+
+def test_guess_in_history7():
+    history = [
+        MockHistoryRecord(word="buggy", hint=Hint.MISS.value * 5),
+    ]
+    guess = "scare"
+    candidates = ["hello", "world", "fresh", "panic", "scare"]
+    expected_hints = [
+        Hint.MISS.value * 4 + Hint.PRESENT.value,
+        Hint.MISS.value * 3 + Hint.PRESENT.value + Hint.MISS.value,
+    ]
+    expected_candidates = ["hello", "world"]
+
+    hint, remaining_candidates = update_candidate_by_host_cheating_rule(history, guess, candidates)
+    assert hint in expected_hints, f"Expected one of {expected_hints}, but got {hint}"
+    assert (
+        remaining_candidates[0] in expected_candidates
+    ), f"Expected {expected_candidates}, but got {remaining_candidates}"

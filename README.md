@@ -165,6 +165,7 @@ Which is implemented on `./server` as an API server with componments:
       - DB migration: alembic
          - add db version by `alembic revision -m "some_msg"` and modify the created file contents
          - automatically run migration when server start
+      - python unit test: pytest
       - python linter and formatter: ruff
 ### Client side
 Which is implemented on `./client`, provides service to player by:
@@ -184,7 +185,7 @@ Which is implemented on `./client`, provides service to player by:
 ## Task 3 - Host cheaing wordle
 Host cheating wordle can be played by selecting `hard` on "Mode" dropdown in page and then start by clicking "New Game" button.
 
-Server handle logic: (refer to `./server/views/game.py`'s `submit_guess()` )
+Server handle logic: (refer to `./server/src/game_guess.py`'s `update_candidate_by_host_cheating_rule()` )
 1) select a list of words(named `candidates`) by:
    - (`ENV=dev/demo`) default list: [hello,world,quite,fancy,fresh,panic,crazy,buggy,scare]) or
    - (`ENV!=dev/demo`) random pick `max(5, num_of_attempts_player_selected - 2)` words from db(ie. `Vocabulary` table)

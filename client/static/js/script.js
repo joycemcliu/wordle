@@ -231,7 +231,7 @@ function createKeyboard() {
                 }
                 clearGuessMsg();
                 if (key === 'ENTER') {
-                    checkGuess();
+                    submitGuess();
                 } else if (key === '⌫') {
                     deleteLetter();
                 } else {
@@ -302,6 +302,7 @@ function updateGuess(hint, word) {
 
 function submitGuess() {
     if (guess.length === 0 || guess.length !== maxCols) {
+        updateGuessMsg("Invalid guess", "black");
         return;
     }
 

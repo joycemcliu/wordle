@@ -142,6 +142,7 @@ def update_candidate_by_host_cheating_rule(history, guess, candidates) -> list[s
     hint = list(Hint.MISS.value * len(guess))
     for i in range(len(guess)):
         w = guess[i]
+        # if all candidates have the same letter, then it's a PRESENT
         if all(w in c for c in candidates):
             hint[i] = Hint.PRESENT.value
     hint = "".join(hint)

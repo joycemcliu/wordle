@@ -191,7 +191,11 @@ Server handle logic: (refer to `./server/src/game_guess.py`'s `update_candidate_
    - (`ENV!=dev/demo`) random pick `max(5, num_of_attempts_player_selected - 2)` words from db(ie. `Vocabulary` table)
 2) received player guess and update `candidates` by:
    1. if guess appear previous -> return previous hint
-   2. filter out words from `candidates` that violate highest score words and hints
-   3. update `candidates` if words after filtered out words from `candidates` that violate previous hints remains > 1
-   4. update hint by comparing `guess` and `candidates`
-   5. return hint
+   2. if one word in `candidates` -> return hint like a normal wordle
+   3. filter out words from `candidates` that violate previous history hints
+   4. refine `candidates` by highest scoring words, then
+      - if num of remaining > 0, update `candidates`
+      - else, random pick from lowest scoring words
+   5. get hint as feedback for player by:
+      - if num of `candidates` == 1, return hint like a normal wordle
+      - else, update hint to "PRESENT" if all `candidates` has the same latter.

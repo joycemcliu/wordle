@@ -40,10 +40,13 @@ ENV=demo
 POSTGRES_DB=wordle
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres-pw
+# postgres expose on postgresql://postgres:postgres-pw@postgres:35432/wordle
 POSTGRES_PORT=35432
 
 # service expose port
+## server expose on: http://localhost:8701
 SERVER_PORT=8710
+## client expose on: http://localhost:8711
 CLIENT_PORT=8711
 
 # override server's default word list
@@ -62,7 +65,7 @@ This mode is for demonstration, the 5-letter word list is using list: [hello,wor
 
 2. Start Service by:
     ```sh
-    docker compose up
+    docker compose up --build
     ```
 Server api doc: http://0.0.0.0:8710/docs.
 
@@ -147,7 +150,7 @@ Server side is as a host of the game to responsible on:
 Which is implemented on `./server` as an API server with componments:
    - Postgres: db named as `wordle` and has table with corresponding usage:
       - `Vocabulary`: store possible words and corresponding length
-         - pre-defined 14,855 5-letter words.
+         - pre-defined 14,855 5-letter words (source from: https://github.com/tabatkins/wordle-list)
          - for checking if a guess is a valid English word
          - for selecting answer candidates
       - `User`: store username
